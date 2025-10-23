@@ -1,5 +1,12 @@
 # Vegetable_Cd_risk_System_Dynamics-SD-model
-Vegetable Cd risk System Dynamics (SD) model
+
+This project was developed at the:
+
+Hunan Provincial University Key Laboratory for Environmental and Ecological Health
+
+Hunan Provincial University Key Laboratory for Environmental Behavior and Control Principle of New Pollutants
+
+College of Environment and Resources, Xiangtan University, Xiangtan 411105, China
 
 
 # System Dynamics Model of Vegetable Cadmium Pollution: Policy-Environment-Health Integrated Framework
