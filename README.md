@@ -354,6 +354,5 @@ If you use this model or code in your research, please cite:
 ---
 
 **Last Updated**: 2025-10-23  
-**Model Version**: 2.0 (Realistic Constraints Implementation)  
-**Status**: ✓ Production Ready
+
 ```
