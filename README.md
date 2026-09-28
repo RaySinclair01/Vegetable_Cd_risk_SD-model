@@ -1,6 +1,4 @@
-
 # Vegetable_Cd_risk_System_Dynamics-SD-model
-
 
 # System Dynamics Model of Vegetable Cadmium Pollution: Policy-Environment-Health Integrated Framework
 
@@ -22,17 +20,7 @@ The model framework visualizes the complex causal pathways from soil contaminati
 
 ## Key Features
 
-### 1. Architecture & Visualization Scripts
-
-- **Editable System Dynamics Diagram** (`Vegetable_Cd_SD_Model_Editable.py`)
-  - High-resolution (16:9 aspect ratio, 36×20.25 inches) system dynamics framework
-  - Professional color-coded layers (Policy → Environmental → Soil → Bioaccumulation → Exposure → Health)
-  - Smooth Bézier curves with embedded pathway coefficients
-  - PDF/SVG output with **editable text** (fonttype=42 for TrueType vectors)
-  - Feedback loops visualization (Reinforcing Loop R1, Social Feedback)
-  - Information boxes with model structure and pathway summaries
-
-### 2. Policy Scenario Projection (2025-2035)
+### Policy Scenario Projection (2025-2035)
 
 - **Realistic System Dynamics Model** (`p24_baseON_SD_predict_2025-2035_05.py`)
   - **Two scenarios**:
@@ -131,20 +119,16 @@ min_efficiency = 0.40
 
 ## File Descriptions
 
-### Visualization & Framework Scripts
+### Scripts & Data
 
 | File | Description | Output Format |
 |------|-------------|----------------|
-| `Vegetable_Cd_SD_Model_Editable.py` | System dynamics architecture diagram with multiple layers, nodes, and feedback pathways | PNG (400 DPI), PDF, SVG (all with editable text) |
 | `p24_baseON_SD_predict_2025-2035_05.py` | 2025-2035 policy scenario projections with realistic constraints | 9-panel figure + CSV summaries + parameter Excel |
 | `Comprehensive_Database_Field_Dryland_ONLY_Cd去除异常值.xlsx` | CVCCD data file used for model input and validation | XLSX |
 
 ### Output Files Generated
 
 ```
-├── Vegetable_Cd_SD_Model_Editable.png
-├── Vegetable_Cd_SD_Model_Editable.pdf
-├── Vegetable_Cd_SD_Model_Editable.svg
 ├── SD_Projection_2025_2035_CBSEM_v05_NewDB_NewSEM.png
 ├── SD_Projection_2025_2035_CBSEM_v05_NewDB_NewSEM.pdf
 ├── SD_Projection_2025_2035_CBSEM_Summary_v05_NewDB_NewSEM.csv
@@ -164,15 +148,7 @@ pip install numpy pandas matplotlib scipy seaborn scikit-learn openpyxl
 
 ### Quick Start
 
-1. **Generate System Dynamics Diagram**:
-
-```python
-python Vegetable_Cd_SD_Model_Editable.py
-```
-
-Output: Editable PDF/SVG with system architecture and coefficient annotations.
-
-2. **Run Policy Scenario Projections**:
+1. **Run Policy Scenario Projections**:
 
 ```python
 python p24_baseON_SD_predict_2025-2035_05.py
@@ -180,7 +156,7 @@ python p24_baseON_SD_predict_2025-2035_05.py
 
 Output: 9-panel visualization, CSV data tables, and parameter Excel.
 
-3. **Custom Analysis** (modify parameters):
+2. **Custom Analysis** (modify parameters):
 
 ```python
 import importlib
@@ -319,4 +295,3 @@ High Risk:      THQ > 2.0          → Urgent action; medical evaluation recomme
 This project is released under the **MIT License** for academic and research use.
 
 ---
-
