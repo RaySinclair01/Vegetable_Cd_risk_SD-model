@@ -1,12 +1,5 @@
+
 # Vegetable_Cd_risk_System_Dynamics-SD-model
-
-This project was developed at the:
-
-Hunan Provincial University Key Laboratory for Environmental and Ecological Health
-
-Hunan Provincial University Key Laboratory for Environmental Behavior and Control Principle of New Pollutants
-
-College of Environment and Resources, Xiangtan University, Xiangtan 411105, China
 
 
 # System Dynamics Model of Vegetable Cadmium Pollution: Policy-Environment-Health Integrated Framework
@@ -16,6 +9,7 @@ College of Environment and Resources, Xiangtan University, Xiangtan 411105, Chin
 This repository contains a comprehensive **System Dynamics (SD) model** that integrates policy interventions, environmental factors, soil properties, bioaccumulation processes, dietary exposure, and population-specific health risks to simulate vegetable cadmium (Cd) pollution dynamics and project policy outcomes from 2025-2035.
 
 The model framework visualizes the complex causal pathways from soil contamination through bioaccumulation to human health risks, incorporating:
+
 - **Policy Layer**: Soil remediation, pH amendment, organic matter enhancement, planting structure adjustment, dietary guidance, and market regulation
 - **Environmental System**: Climate zones, geographic regions, provinces, and seasonal variations
 - **Soil Contamination & Properties**: Soil Cd content, pH, organic matter, and cation exchange capacity (CEC)
@@ -28,26 +22,28 @@ The model framework visualizes the complex causal pathways from soil contaminati
 
 ## Key Features
 
-### 1. **Architecture & Visualization Scripts**
+### 1. Architecture & Visualization Scripts
+
 - **Editable System Dynamics Diagram** (`Vegetable_Cd_SD_Model_Editable.py`)
   - High-resolution (16:9 aspect ratio, 36×20.25 inches) system dynamics framework
   - Professional color-coded layers (Policy → Environmental → Soil → Bioaccumulation → Exposure → Health)
   - Smooth Bézier curves with embedded pathway coefficients
   - PDF/SVG output with **editable text** (fonttype=42 for TrueType vectors)
   - Feedback loops visualization (Reinforcing Loop R1, Social Feedback)
-  - Information boxes with statistical summaries (CB-SEM paths, SHAP importance, marginal effects, flow contributions)
+  - Information boxes with model structure and pathway summaries
 
-### 2. **Policy Scenario Projection (2025-2035)**
-- **Realistic System Dynamics Model** (`SD_Projection_2025_2035_Realistic.py`)
+### 2. Policy Scenario Projection (2025-2035)
+
+- **Realistic System Dynamics Model** (`p24_baseON_SD_predict_2025-2035_05.py`)
   - **Two scenarios**:
     - **BAU (Business-As-Usual)**: No policy intervention, natural decay only
     - **RP (Recommended Policy)**: Evidence-based policy package with realistic constraints
   - **Realistic Constraints Implemented**:
-    - Residual baselines (irreducible contamination: soil Cd 0.80 mg/kg, veg Cd 0.030 mg/kg)
-    - Policy efficiency decay with 8-year half-life
+    - Residual baselines for irreducible contamination
+    - Policy efficiency decay with a finite half-life
     - Diminishing returns on repeated interventions
     - Biological/physical lower bounds
-    - Background exposure from non-vegetable sources (THQ 0.25)
+    - Background exposure from non-vegetable sources
   - **Outputs**:
     - 9-panel comparison visualization (subplots b-j)
     - Cumulative improvement metrics
@@ -61,39 +57,55 @@ The model framework visualizes the complex causal pathways from soil contaminati
 ### System Dynamics Equations
 
 #### Soil Contamination
+
 ```
 dSoil_Cd/dt = (Natural decay) + (Atmospheric deposition) - (Policy remediation)
-            = -α·removable_Cd + β·remediation_rate·efficiency(t) + 0.02
+            = -α·removable_Cd + β·remediation_rate·efficiency(t) + 0.015
 ```
 
 #### Bioconcentration Factor (BCF)
+
 ```
-BCF(t) = BCF₀ · exp(β_pH·ΔpH_norm) · exp(β_SOM·ΔSOM_norm) · (1 - policy_reduction·efficiency(t))
+BCF(t) = BCF₀ · (1 + β_soil_cd·Δsoil_cd_norm)
+              · (1 + pH_effect·ΔpH)
+              · (1 + CEC_effect·ΔCEC/5)
+              · (1 + SOM_effect·ΔSOM)
+              · (1 - policy_reduction·efficiency(t))
 ```
-- **pH effect**: ΔpH +1 → BCF -21% to -52% (β = -0.346***)
-- **SOM effect**: Δ+1% SOM → BCF -0.78% (r = -0.21*)
+
+- **Soil Cd pool → BCF**: β = +0.497 (sum of Soil Cd and SCC; they are identical in 85% of records with VIF > 300, so they cannot be interpreted separately)
+- **pH marginal effect**: +1 unit pH → BCF decreases by 9.06% (β = -0.071, p = 0.512)
+- **CEC marginal effect**: +5 cmol/kg CEC → BCF increases by 16.91% (β = +0.136, p = 0.160)
+- **SOM marginal effect**: +1 g/kg SOM → BCF decreases by 2.04% (β = -0.382, p = 0.003; ≈ +1% SOM (i.e., 10 g/kg) decreases BCF by 20.38%)
 - **Residual constraint**: BCF ≥ residual_BCF
 
 #### Vegetable Cadmium Content
+
 ```
 Veg_Cd(t) = Soil_Cd · BCF(t) · (1 - market_control·efficiency(t))
           + residual_veg_Cd
 ```
 
 #### Health Risk Assessment (THQ)
+
 ```
-THQ(t) = (Veg_Cd · Consumption) / (Body_Weight · 365 · RfD)
-       + Δ(Veg_Cd)·marginal_effect
-       + background_THQ·exp(-decay_rate·t)
+EDI_veg = (Veg_Cd · Consumption) / (Body_Weight · 365)
+THQ_veg = EDI_veg / RfD
+THQ_total = THQ_veg + background_THQ
 ```
-- **Marginal effect**: Δ0.1 mg/kg Veg Cd → THQ ↑ 0.91-0.93
-- **Consumption elasticity**: +10 kg/year → THQ ↑ 0.27-0.64
-- **Background THQ**: 0.25 from rice, water, air
+
+- The classic WHO THQ formula is adopted.
+- Marginal effects are already reflected in upstream steps such as BCF calculation and are not reapplied in THQ calculation.
+- Background THQ remains stable at 0.3014 (from non-vegetable sources such as rice, drinking water, and atmospheric deposition).
+- RfD (Cd) = 0.001 mg/kg/day.
 
 ### Policy Efficiency Decay Function
+
 ```
 efficiency(t) = min_efficiency + (1 - min_efficiency) · exp(-λ·t)
-λ = ln(2) / half_life = ln(2) / 8 years
+λ = ln(2) / half_life
+half_life = 8 years
+min_efficiency = 0.40
 ```
 
 ---
@@ -101,63 +113,19 @@ efficiency(t) = min_efficiency + (1 - min_efficiency) · exp(-λ·t)
 ## Data & Methodology
 
 ### Data Source
+
 - **CVCCD Database** (China Vegetable & Cadmium Contamination Dataset)
-  - **Sample size**: n = 2,674 observations
-  - **Geographic coverage**: 30 provinces, 8 climate zones, 5 regions
-  - **Vegetable diversity**: 115 vegetable types (51.87% leafy, 24.61% root, 23.52% fruit)
-  - **Soil types**: 14 categories (Red Soil: 21.2%, Loess soil: BCF up to 1.8×)
+  - **Data file**: `Comprehensive_Database_Field_Dryland_ONLY_Cd去除异常值.xlsx`
+  - **Geographic coverage**: Multiple provinces, climate zones, and regions across China
+  - **Vegetable diversity**: Leafy, root, and fruit vegetables
+  - **Soil types**: Multiple soil categories relevant to vegetable production
   - **Time period**: 2004-2021
 
-### Model Performance
-- **Machine Learning Integration**: CNN + XGBoost + LightGBM + Random Forest + SVM + GBDT
-- **AUC**: 0.99 | **Accuracy**: 0.97
-- **SHAP Feature Importance**: Veg Cd (1.31-4.40), Consumption (0.09-1.38), Soil Cd (0.50-1.20), BCF (0.30-0.90)
+### Model Integration
 
-### Statistical Validation (CB-SEM)
-| Pathway | Coefficient | Significance |
-|---------|------------|--------------|
-| Climate → Soil Cd | 0.714 | *** |
-| pH → BCF | -0.346 | *** |
-| Soil Cd → BCF | 0.595 | *** |
-| BCF → Veg Cd | 0.247 | *** |
-| Veg Cd → THQ | 0.999 | *** |
-| Consumption → THQ | 0.016 | *** |
-
-*** p < 0.001, ** p < 0.01
-
----
-
-## Key Findings
-
-### 2025-2035 Projection Results
-
-#### Scenario Comparison (10-Year Cumulative Effect)
-
-| Indicator | BAU 2025 | BAU 2035 | RP 2025 | RP 2035 | Policy Benefit |
-|-----------|----------|----------|---------|---------|----------------|
-| Soil Cd (mg/kg) | 2.04 | 2.02 | 2.04 | 1.38 | **-32.4%** |
-| Veg Cd (mg/kg) | 0.160 | 0.158 | 0.160 | 0.085 | **-46.2%** |
-| Average THQ | 1.713 | 1.701 | 1.713 | 1.182 | **-30.5%** |
-| Urban Male THQ | 1.587 | 1.577 | 1.587 | 1.051 | **-33.4%** |
-| Urban Female THQ | 1.854 | 1.843 | 1.854 | 1.287 | **-30.2%** |
-| Rural Male THQ | 1.615 | 1.604 | 1.615 | 1.112 | **-31.2%** |
-| Rural Female THQ | 1.835 | 1.824 | 1.835 | 1.268 | **-30.8%** |
-
-### Health Risk Stratification (RP Scenario by 2035)
-
-| Risk Category | THQ Range | 2035 Population% | Risk Level |
-|---------------|-----------|-----------------|-----------|
-| No Risk | 0 < THQ ≤ 0.5 | 5-8% | Safe |
-| Low Risk | 0.5 < THQ ≤ 1.0 | 35-42% | Acceptable |
-| Medium Risk | 1 < THQ ≤ 2.0 | 45-55% | Intervention needed |
-| High Risk | THQ > 2.0 | 2-5% | Urgent action required |
-
-### Policy Efficiency & Residual Constraints
-
-1. **Soil Cd reduction** approaches residual baseline (0.80 mg/kg) after 10 years of intensive remediation
-2. **Policy effectiveness decay**: 8-year half-life; by 2035, effectiveness reduced to 40-50% of initial impact
-3. **Gender disparity**: Female THQ 1.8% higher than males due to lower body weight
-4. **Regional inequality**: Central China THQ up 41.3% vs Eastern regions
+- Machine learning models integrated for prediction and feature analysis.
+- Structural equation modeling used to validate major causal pathways.
+- Detailed performance metrics and statistical coefficients are not included in this README.
 
 ---
 
@@ -167,19 +135,21 @@ efficiency(t) = min_efficiency + (1 - min_efficiency) · exp(-λ·t)
 
 | File | Description | Output Format |
 |------|-------------|----------------|
-| `Vegetable_Cd_SD_Model_Editable.py` | System dynamics architecture diagram with 8 layers, 30+ nodes, and 15+ feedback pathways | PNG (400 DPI), PDF, SVG (all with editable text) |
-| `SD_Projection_2025_2035_Realistic.py` | 2025-2035 policy scenario projections with realistic constraints | 9-panel figure + CSV summaries |
+| `Vegetable_Cd_SD_Model_Editable.py` | System dynamics architecture diagram with multiple layers, nodes, and feedback pathways | PNG (400 DPI), PDF, SVG (all with editable text) |
+| `p24_baseON_SD_predict_2025-2035_05.py` | 2025-2035 policy scenario projections with realistic constraints | 9-panel figure + CSV summaries + parameter Excel |
+| `Comprehensive_Database_Field_Dryland_ONLY_Cd去除异常值.xlsx` | CVCCD data file used for model input and validation | XLSX |
 
 ### Output Files Generated
 
 ```
-├── Vegetable_Cd_SD_Model_Editable.png          # High-resolution diagram (400 DPI)
-├── Vegetable_Cd_SD_Model_Editable.pdf          # Editable vector format
-├── Vegetable_Cd_SD_Model_Editable.svg          # Scalable vector graphics
-├── SD_Projection_2025_2035_Realistic.png       # 9-panel comparison (400 DPI)
-├── SD_Projection_2025_2035_Realistic.pdf       # Publication-ready PDF
-├── SD_Projection_2025_2035_Realistic_Summary.csv        # Aggregated metrics
-└── SD_Projection_2025_2035_Realistic_Full_Data.csv     # Complete time-series (2025-2035, 0.1-year intervals)
+├── Vegetable_Cd_SD_Model_Editable.png
+├── Vegetable_Cd_SD_Model_Editable.pdf
+├── Vegetable_Cd_SD_Model_Editable.svg
+├── SD_Projection_2025_2035_CBSEM_v05_NewDB_NewSEM.png
+├── SD_Projection_2025_2035_CBSEM_v05_NewDB_NewSEM.pdf
+├── SD_Projection_2025_2035_CBSEM_Summary_v05_NewDB_NewSEM.csv
+├── SD_Projection_2025_2035_CBSEM_Full_Data_v05_NewDB_NewSEM.csv
+└── SD_Parameters_v05_NewDB_NewSEM.xlsx
 ```
 
 ---
@@ -187,38 +157,45 @@ efficiency(t) = min_efficiency + (1 - min_efficiency) · exp(-λ·t)
 ## Installation & Usage
 
 ### Requirements
+
 ```bash
-pip install numpy pandas matplotlib scipy seaborn scikit-learn
+pip install numpy pandas matplotlib scipy seaborn scikit-learn openpyxl
 ```
 
 ### Quick Start
 
 1. **Generate System Dynamics Diagram**:
+
 ```python
 python Vegetable_Cd_SD_Model_Editable.py
 ```
-Output: Editable PDF/SVG with system architecture and coefficient annotations
+
+Output: Editable PDF/SVG with system architecture and coefficient annotations.
 
 2. **Run Policy Scenario Projections**:
+
 ```python
-python SD_Projection_2025_2035_Realistic.py
+python p24_baseON_SD_predict_2025-2035_05.py
 ```
-Output: 9-panel visualization + CSV data tables
+
+Output: 9-panel visualization, CSV data tables, and parameter Excel.
 
 3. **Custom Analysis** (modify parameters):
-```python
-from SD_Projection_2025_2035_Realistic import VegetableCdSystemDynamicsProjection
 
-model = VegetableCdSystemDynamicsProjection()
+```python
+import importlib
+
+module = importlib.import_module("p24_baseON_SD_predict_2025-2035_05")
+model = module.VegetableCdSystemDynamicsProjection()
 
 # Customize policy parameters
 custom_policy = {
-    'soil_remediation_rate': 0.05,      # Increase soil remediation to 5%/year
-    'pH_amendment_rate': 0.15,          # Stronger pH intervention
-    'SOM_increase_rate': 2.0,           # More organic matter addition
-    'BCF_reduction_factor': 0.30,       # Crop selection focus
-    'consumption_reduction': 0.15,      # Dietary shift campaign
-    'veg_cd_market_control': 0.20       # Stricter market standards
+    'soil_remediation_rate': 0.05,
+    'pH_amendment_rate': 0.15,
+    'SOM_increase_rate': 2.0,
+    'BCF_reduction_factor': 0.30,
+    'consumption_reduction': 0.15,
+    'veg_cd_market_control': 0.20
 }
 
 results_custom = model.run_projection(custom_policy, 'Custom Policy')
@@ -232,22 +209,22 @@ model.visualize_projection(results_BAU, results_custom)
 ### Subplot Descriptions (a-j)
 
 - **(b) Vegetable Cd Projection**: Shows convergence toward residual baseline with RP policy
-- **(c) Average THQ Trend**: Primary health outcome; safety threshold (THQ=1) marked
+- **(c) Average THQ Trend**: Primary health outcome; safety threshold marked
 - **(d) Soil Cd Content**: Foundation of food chain exposure
 - **(e) Population-Specific THQ**: Gender × Urban-Rural stratification
-- **(f) pH Trajectory**: Key soil property affecting BCF (inverse relationship)
+- **(f) pH Trajectory**: Key soil property affecting BCF
 - **(g) BCF Evolution**: Bioaccumulation trend across vegetable types
-- **(h) Vegetable Cd Reduction**: Cumulative benefit from policies (%)
+- **(h) Vegetable Cd Reduction**: Cumulative benefit from policies
 - **(i) THQ Reduction**: Main health outcome improvement metric
 - **(j) Population THQ Evolution**: Long-term risk distribution across demographic groups
 
 ### Risk Assessment Categories
 
 ```
-No Risk:        THQ ≤ 0.5    → Safe for general population
-Low Risk:       0.5 < THQ ≤ 1.0   → Acceptable; routine monitoring
-Medium Risk:    1.0 < THQ ≤ 2.0   → Intervention needed; dietary counseling
-High Risk:      THQ > 2.0    → Urgent action; medical evaluation recommended
+No Risk:        THQ ≤ 0.5          → Safe for general population
+Low Risk:       0.5 < THQ ≤ 1.0    → Acceptable; routine monitoring
+Medium Risk:    1.0 < THQ ≤ 2.0    → Intervention needed; dietary counseling
+High Risk:      THQ > 2.0          → Urgent action; medical evaluation recommended
 ```
 
 ---
@@ -258,17 +235,38 @@ High Risk:      THQ > 2.0    → Urgent action; medical evaluation recommended
 |-----------|-------|-------------|
 | Soil Cd natural decay | 2%/year | Literature; weathering + leaching |
 | Policy efficiency half-life | 8 years | Evidence-based diminishing returns |
-| Residual soil Cd | 0.80 mg/kg | Atmospheric deposition + parent material |
-| Residual veg Cd | 0.030 mg/kg | Detection limit + genetic background |
-| Background THQ | 0.25 | Rice (main staple), water, air |
+| Minimum policy efficiency | 0.40 | Residual policy effectiveness floor |
+| Atmospheric deposition | 0.015 mg/kg/year | Model constant |
+| Residual soil Cd | 0.00685 mg/kg | Minimum in database |
+| Residual veg Cd | 8.1e-05 mg/kg | Minimum in database |
+| Background THQ | 0.3014 | Rice, water, air |
 | RfD (Cd) | 0.001 mg/kg/day | US EPA reference dose |
 | Target pH | 7.0 | Optimal for Cd immobilization |
+| SOM effect | +1 g/kg → BCF decreases by 2.04% | β = -0.382, p = 0.003 |
+| pH effect | +1 unit → BCF decreases by 9.06% | β = -0.071, p = 0.512 |
+| CEC effect | +5 cmol/kg → BCF increases by 16.91% | β = +0.136, p = 0.160 |
+| Soil Cd pool → BCF | β = +0.497 | Sum of Soil Cd and SCC; collinear |
+| BCF → Veg Cd | β = 0.379 | p < 0.001 |
+| Veg Cd → THQ | β = 1.001 | p < 0.001 |
+| Consumption → THQ | β = 0.0065 | p = 0.044 |
+
+### Policy Scenario Parameters
+
+| Parameter | BAU | RP |
+|-----------|-----|-----|
+| soil_remediation_rate | 0.00 | 0.03 |
+| pH_amendment_rate | 0.00 | 0.10 |
+| SOM_increase_rate | 0.00 | 1.2 |
+| BCF_reduction_factor | 0.00 | 0.18 |
+| consumption_reduction | 0.00 | 0.10 |
+| veg_cd_market_control | 0.00 | 0.12 |
 
 ---
 
 ## Limitations & Future Work
 
 ### Current Limitations
+
 1. **Aggregated scale**: Provincial-level analysis; sub-regional variation not captured
 2. **Linear policy assumptions**: Actual implementation heterogeneity not modeled
 3. **Climate change**: Fixed climate zone assumptions; future climate shift not projected
@@ -276,6 +274,7 @@ High Risk:      THQ > 2.0    → Urgent action; medical evaluation recommended
 5. **Economic constraints**: Policy cost-effectiveness not integrated
 
 ### Future Extensions
+
 - [ ] Sub-grid spatial heterogeneity (county-level)
 - [ ] Stochastic uncertainty analysis (Monte Carlo simulation)
 - [ ] Climate change scenarios (RCP 4.5/8.5)
@@ -290,13 +289,13 @@ High Risk:      THQ > 2.0    → Urgent action; medical evaluation recommended
 ### Core Publications
 
 1. **System Framework & Empirical Data**
-   - CVCCD Database: 2,674 observations from China's vegetable production regions (2004-2021)
-   - CB-SEM validation: Pathway coefficients from structural equation modeling (p < 0.001 for major paths)
+   - CVCCD Database: observations from China's vegetable production regions (2004-2021)
+   - CB-SEM validation: pathway coefficients from structural equation modeling
 
 2. **Health Risk Assessment**
    - US EPA Target Hazard Quotient (THQ) methodology
-   - RfD for Cd: 0.001 mg/kg/day (reference dose)
-   - Integrated ML model: AUC 0.99, Accuracy 97%
+   - RfD for Cd: 0.001 mg/kg/day
+   - Integrated machine learning models for prediction and feature analysis
 
 3. **Policy Scenarios**
    - BAU: Natural decay assumptions based on Chinese agricultural soil studies
@@ -321,38 +320,3 @@ This project is released under the **MIT License** for academic and research use
 
 ---
 
-## Contact & Support
-
-For questions, collaborations, or data access requests:
-- **Research Team**: College of Environment and Resources, Xiangtan University
-- **Project Lead**: [Your Name/Contact]
-- **GitHub Issues**: Submit technical questions and feature requests
-
----
-
-## Acknowledgments
-
-This research was supported by funding from the [Relevant Research Grant/Program]. We thank the CVCCD database custodians and all field survey participants for data collection efforts.
-
----
-
-## Citation
-
-If you use this model or code in your research, please cite:
-
-```bibtex
-@software{vegetable_cd_sd_2025,
-  title={System Dynamics Model of Vegetable Cadmium Pollution: 
-         Policy-Environment-Health Integrated Framework},
-  author={[Research Team]},
-  year={2025},
-  institution={Xiangtan University},
-  url={https://github.com/[your-repo]}
-}
-```
-
----
-
-**Last Updated**: 2025-10-23  
-
-```
